@@ -11,7 +11,7 @@ target_lists = []
 diff_lists = []
 not_FD_files = []
 date_now = datetime.datetime.now()
-date_str = f'{date_now.year}{date_now.month}{date_now.day}_{date_now.hour}{date_now.minute}{date_now.second}'
+date_str = f'{date_now:%Y%m%d}_{date_now:%H%M%S}'
 
 def setup_debug():
   global logger
