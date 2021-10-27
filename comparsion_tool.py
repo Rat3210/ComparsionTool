@@ -5,11 +5,13 @@ import filecmp
 from difflib import HtmlDiff
 import inspect
 import datetime
+import glob
 
 target_lists = []
 diff_lists = []
 not_FD_files = []
 date_now = datetime.datetime.now()
+date_str = f'{date_now.year}{date_now.month}{date_now.day}_{date_now.hour}{date_now.minute}{date_now.second}'
 
 def setup_debug():
   global logger
@@ -181,10 +183,9 @@ def end_process():
   input('エンターキーを押して、処理を終了してください。\nPress the Enter key to end the process.')
   exit()
 
-def exportnfd_files(nfd_files, diff1, diff2):
+def export_nfd_files(nfd_files, diff1, diff2):
   logger.info(f'{inspect.currentframe().f_code.co_name}')
   if len(nfd_files) > 0:
-    date_str = f'{date_now.year}{date_now.month}{date_now.day}_{date_now.hour}{date_now.minute}{date_now.second}'
     logger.debug(f'{inspect.currentframe().f_code.co_name}[date_str]：{date_str}')
     make_dir('log\\NotFoundFiles')
     filepath = f'.\\log\\NotFoundFiles\\【NotFoundFiles】{diff1}_{diff2}_{date_str}.txt'
@@ -193,10 +194,9 @@ def exportnfd_files(nfd_files, diff1, diff2):
     for file in nfd_files:
       f.write(file + '\n')
 
-def exportfile_paths(diff1, diff2):
+def export_file_paths(diff1, diff2):
   logger.info(f'{inspect.currentframe().f_code.co_name}')
   if len(diff_lists) > 0:
-    date_str = f'{date_now.year}{date_now.month}{date_now.day}_{date_now.hour}{date_now.minute}{date_now.second}'
     logger.debug(f'{inspect.currentframe().f_code.co_name}[date_str]：{date_str}')
     make_dir('log\\FilePathList')
     filepath = f'.\\log\\FilePathList\\【FilePathList】{diff1}_{diff2}_{date_str}.txt'
@@ -206,13 +206,25 @@ def exportfile_paths(diff1, diff2):
       for file in list:
         f.write(file + '\n')
 
+def export_dir_paths():
+  logger.info(f'{inspect.currentframe().f_code.co_name}')
+  make_dir('log\\DirList')
+  for target in target_lists:
+    filepath = f'.\\log\\DirList\\{target}_{date_str}.txt'
+    target_dirs = []
+    target_dirs = glob.glob(f'.\\target\\{target}\\**\\', recursive = True)
+    f = open(filepath, 'w')
+    for dir in target_dirs:
+      f.write(dir + '\n')
+
 def main_process():
   get_files()
   check_diff()
 
 def export_process():
-  exportnfd_files(not_FD_files, target_lists[0], target_lists[1])
-  exportfile_paths(target_lists[0], target_lists[1])
+  export_nfd_files(not_FD_files, target_lists[0], target_lists[1])
+  export_file_paths(target_lists[0], target_lists[1])
+  export_dir_paths()
 
 #処理実行:Processing execution
 setup_debug()
