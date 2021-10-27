@@ -4,19 +4,21 @@ import logging
 import filecmp
 from difflib import HtmlDiff
 import inspect
+import datetime
 
 target_lists = []
 diff_lists = []
 not_FD_files = []
-
+date_now = datetime.datetime.now()
 
 def setup_debug():
   global logger
   logger = logging.getLogger('DebugTest')
-  log_file = logging.FileHandler('DebugLog.log')
-  logger.setLevel(logging.INFO)
+  if not os.path.isdir('log'):
+    os.makedirs('log')
+  log_file = logging.FileHandler('log\\DebugLog.log')
+  logger.setLevel(logging.DEBUG)
   logger.addHandler(log_file)
-  
   formatter = logging.Formatter('%(asctime)s:%(lineno)d:%(levelname)s:%(message)s')
   log_file.setFormatter(formatter)
 
@@ -73,9 +75,9 @@ def make_diff_html(comp_sour, comp_dest, html_name):
 
 def make_dir(dir_name):
   logger.info(f'{inspect.currentframe().f_code.co_name}')
-  dir_name = f'.\\{dir_name}'
+  dir_name = f'.\\{dir_name}\\'
   if not os.path.isdir(dir_name):
-    os.mkdir(dir_name)
+    os.makedirs(dir_name)
 
 def check_file_exist(sour_file, dest_list, target_num):
   logger.info(f'{inspect.currentframe().f_code.co_name}')
@@ -179,17 +181,27 @@ def end_process():
   input('エンターキーを押して、処理を終了してください。\nPress the Enter key to end the process.')
   exit()
 
-def exportnfd_files(nfd_files):
+def exportnfd_files(nfd_files, diff1, diff2):
   logger.info(f'{inspect.currentframe().f_code.co_name}')
   if len(nfd_files) > 0:
-    f = open('.\\【NotFoundFiles】.txt', 'w')
+    date_str = f'{date_now.year}{date_now.month}{date_now.day}_{date_now.hour}{date_now.minute}{date_now.second}'
+    logger.debug(f'{inspect.currentframe().f_code.co_name}[date_str]：{date_str}')
+    make_dir('log\\NotFoundFiles')
+    filepath = f'.\\log\\NotFoundFiles\\【NotFoundFiles】{diff1}_{diff2}_{date_str}.txt'
+    logger.debug(f'{inspect.currentframe().f_code.co_name}[filepath]：{filepath}')
+    f = open(filepath, 'w')
     for file in nfd_files:
       f.write(file + '\n')
 
-def exportfile_paths():
+def exportfile_paths(diff1, diff2):
   logger.info(f'{inspect.currentframe().f_code.co_name}')
   if len(diff_lists) > 0:
-    f = open('.\\【FilePathList】.txt', 'w')
+    date_str = f'{date_now.year}{date_now.month}{date_now.day}_{date_now.hour}{date_now.minute}{date_now.second}'
+    logger.debug(f'{inspect.currentframe().f_code.co_name}[date_str]：{date_str}')
+    make_dir('log\\FilePathList')
+    filepath = f'.\\log\\FilePathList\\【FilePathList】{diff1}_{diff2}_{date_str}.txt'
+    logger.debug(f'{inspect.currentframe().f_code.co_name}[filepath]：{filepath}')
+    f = open(filepath, 'w')
     for list in diff_lists:
       for file in list:
         f.write(file + '\n')
@@ -199,11 +211,10 @@ def main_process():
   check_diff()
 
 def export_process():
-  exportnfd_files(not_FD_files)
-  exportfile_paths()
+  exportnfd_files(not_FD_files, target_lists[0], target_lists[1])
+  exportfile_paths(target_lists[0], target_lists[1])
 
 #処理実行:Processing execution
-
 setup_debug()
 first_process()
 main_process()
