@@ -49,11 +49,6 @@ def get_files():
     message = 'targetフォルダに格納されている比較対象のフォルダ数が足りません。\n比較したいフォルダを2つ格納してください。'
     logger.error(f'{inspect.currentframe().f_code.co_name}-[There are not enough folders.]')
     push_code(err_title, message, 1)
-  elif len(target_lists) > 2:
-    err_title = 'There are too many folders.'
-    message = 'targetフォルダに格納されている比較対象のフォルダ数が多過ぎです。\n比較したいフォルダを2つ格納してください。'
-    logger.error(f'{inspect.currentframe().f_code.co_name}-[There are too many folders.]')
-    push_code(err_title, message, 1)
   for target in target_lists:
     diff_lists.append(get_target_conf(target))
   
@@ -81,33 +76,20 @@ def make_dir(dir_name):
   if not os.path.isdir(dir_name):
     os.makedirs(dir_name)
 
-def check_file_exist(sour_file, dest_list, target_num):
+def check_file_exist(sour_file, dest_list, old_dir_num, new_dir_num):
   logger.info(f'{inspect.currentframe().f_code.co_name}')
-  new_dirname = target_lists[0]
-  old_dirname = target_lists[target_num]
 
-  if target_num == 0:
-    new_dirname = target_lists[1]
-  
-  sour_file = sour_file.replace(old_dirname, new_dirname)
+  sour_file = sour_file.replace(target_lists[old_dir_num], target_lists[new_dir_num])
 
   if sour_file in dest_list:
     return True
   else:
     return False
 
-def get_diff_num(sour_file, dest_list, target_num):
+def get_diff_num(sour_file, dest_list, old_dir_num, new_dir_num):
   logger.info(f'{inspect.currentframe().f_code.co_name}')
-  new_dirname = target_lists[0]
-  old_dirname = target_lists[target_num]
 
-  if target_num == 0:
-    new_dirname = target_lists[1]
-    target_num = 1
-  else:
-    target_num = 0
-      
-  sour_file = sour_file.replace(old_dirname, new_dirname)
+  sour_file = sour_file.replace(target_lists[old_dir_num], target_lists[new_dir_num])
   return dest_list.index(sour_file)
 
 def check_file_diff(comp_sour, comp_dest):
@@ -116,26 +98,33 @@ def check_file_diff(comp_sour, comp_dest):
 
 def check_diff():
   logger.info(f'{inspect.currentframe().f_code.co_name}')
-  for list_num in range(len(diff_lists)):
-    for file_num in range(len(diff_lists[list_num])):
-      if list_num == 0:
-        if check_file_exist(diff_lists[list_num][file_num], diff_lists[1], list_num):
-          diff_num = get_diff_num(diff_lists[list_num][file_num], diff_lists[1], list_num)
-          if check_file_diff(diff_lists[list_num][file_num], diff_lists[1][diff_num]):
+  for target_num in range(len(target_lists)):
+    if target_num >= 1:
+      logger.debug(f'{inspect.currentframe().f_code.co_name}-[Reserve_if[target_num]{target_num}]')
+      for reverse_num in reversed(range(0, target_num)):
+        logger.debug(f'{inspect.currentframe().f_code.co_name}-[Reserve_for[reverse_num]{reverse_num}]')
+        for file_num in range(len(diff_lists[target_num])): 
+          if check_file_exist(diff_lists[target_num][file_num], diff_lists[reverse_num], target_num, reverse_num):
             continue
           else:
-            html_name = f'【Diff_result】{target_lists[0]}_{target_lists[1]}_{diff_lists[list_num][file_num]}'
+            not_FD_files.append(f'{target_lists[target_num]}_{target_lists[reverse_num]}:{diff_lists[target_num][file_num]}')
+    if target_num == len(target_lists) - 1:
+      continue
+    for file_num in range(len(diff_lists[target_num])):
+      for dest_target_num in range(target_num, len(target_lists)):
+        logger.debug(f'{inspect.currentframe().f_code.co_name}-[target_num:{target_num}][dest_target_num:{dest_target_num}]')
+        if check_file_exist(diff_lists[target_num][file_num], diff_lists[dest_target_num], target_num, dest_target_num):
+          diff_num = get_diff_num(diff_lists[target_num][file_num], diff_lists[dest_target_num], target_num, dest_target_num)
+          if check_file_diff(diff_lists[target_num][file_num], diff_lists[dest_target_num][diff_num]):
+            continue
+          else:
+            html_name = f'【Diff_result】{target_lists[target_num]}_{target_lists[dest_target_num]}_{diff_lists[target_num][file_num]}'
             html_name = html_name.replace('.','_')
             html_name = html_name.replace('\\','_')
-
-            make_diff_html(diff_lists[list_num][file_num], diff_lists[1][diff_num], html_name)
+            make_diff_html(diff_lists[target_num][file_num], diff_lists[dest_target_num][diff_num], html_name)
         else:
-          not_FD_files.append(diff_lists[list_num][file_num])
-      elif list_num == 1:
-        if check_file_exist(diff_lists[list_num][file_num], diff_lists[0], list_num):
-          continue
-        else:
-          not_FD_files.append(diff_lists[list_num][file_num])
+          logger.debug(f'{inspect.currentframe().f_code.co_name}-[not_FD_files[ADD]{diff_lists[target_num][file_num]}]')
+          not_FD_files.append(f'{target_lists[target_num]}_{target_lists[dest_target_num]}:{diff_lists[target_num][file_num]}')
 
 def push_code(title, message, code_num):
   logger.info(f'{inspect.currentframe().f_code.co_name}')
@@ -198,19 +187,19 @@ def export_file_paths(diff1, diff2):
   logger.info(f'{inspect.currentframe().f_code.co_name}')
   if len(diff_lists) > 0:
     logger.debug(f'{inspect.currentframe().f_code.co_name}[date_str]：{date_str}')
-    make_dir('log\\FilePathList')
-    filepath = f'.\\log\\FilePathList\\【FilePathList】{diff1}_{diff2}_{date_str}.txt'
-    logger.debug(f'{inspect.currentframe().f_code.co_name}[filepath]：{filepath}')
-    f = open(filepath, 'w')
-    for list in diff_lists:
-      for file in list:
+    for target in range(len(target_lists)):
+      make_dir('log\\FilePathList')
+      filepath = f'.\\log\\FilePathList\\【FilePathList】{target_lists[target]}_{date_str}.txt'
+      logger.debug(f'{inspect.currentframe().f_code.co_name}[filepath]：{filepath}')
+      f = open(filepath, 'w')
+      for file in diff_lists[target]:
         f.write(file + '\n')
 
 def export_dir_paths():
   logger.info(f'{inspect.currentframe().f_code.co_name}')
   make_dir('log\\DirList')
   for target in target_lists:
-    filepath = f'.\\log\\DirList\\{target}_{date_str}.txt'
+    filepath = f'.\\log\\DirList\\【DirList】{target}_{date_str}.txt'
     target_dirs = []
     target_dirs = glob.glob(f'.\\target\\{target}\\**\\', recursive = True)
     f = open(filepath, 'w')
