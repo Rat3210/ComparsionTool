@@ -172,18 +172,18 @@ def end_process():
   input('エンターキーを押して、処理を終了してください。\nPress the Enter key to end the process.')
   exit()
 
-def export_nfd_files(nfd_files, diff1, diff2):
+def export_nfd_files():
   logger.info(f'{inspect.currentframe().f_code.co_name}')
-  if len(nfd_files) > 0:
+  if len(not_FD_files) > 0:
     logger.debug(f'{inspect.currentframe().f_code.co_name}[date_str]：{date_str}')
     make_dir('log\\NotFoundFiles')
-    filepath = f'.\\log\\NotFoundFiles\\【NotFoundFiles】{diff1}_{diff2}_{date_str}.txt'
+    filepath = f'.\\log\\NotFoundFiles\\【NotFoundFiles】{date_str}.txt'
     logger.debug(f'{inspect.currentframe().f_code.co_name}[filepath]：{filepath}')
     f = open(filepath, 'w')
-    for file in nfd_files:
+    for file in not_FD_files:
       f.write(file + '\n')
 
-def export_file_paths(diff1, diff2):
+def export_file_paths():
   logger.info(f'{inspect.currentframe().f_code.co_name}')
   if len(diff_lists) > 0:
     logger.debug(f'{inspect.currentframe().f_code.co_name}[date_str]：{date_str}')
@@ -211,8 +211,8 @@ def main_process():
   check_diff()
 
 def export_process():
-  export_nfd_files(not_FD_files, target_lists[0], target_lists[1])
-  export_file_paths(target_lists[0], target_lists[1])
+  export_nfd_files()
+  export_file_paths()
   export_dir_paths()
 
 #処理実行:Processing execution
